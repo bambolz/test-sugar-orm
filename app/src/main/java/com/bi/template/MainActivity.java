@@ -9,6 +9,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.activeandroid.ActiveAndroid;
+import com.activeandroid.query.Delete;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -17,8 +19,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.bi.template.model.MockObject;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +45,10 @@ public class MainActivity extends AppCompatActivity {
         });
         button.setVisibility(View.GONE);
 
+        final Gson gson = new GsonBuilder().excludeFieldsWithModifiers(Modifier.FINAL, Modifier.TRANSIENT, Modifier.STATIC)
+                .serializeNulls()
+                .create();
+
         // basic simply volley request queue
         // Instantiate the RequestQueue.
         RequestQueue queue = Volley.newRequestQueue(this);
@@ -55,12 +63,19 @@ public class MainActivity extends AppCompatActivity {
                         // using gson to parse json into objects
                         Type listType = new TypeToken<ArrayList<MockObject>>() {
                         }.getType();
-                        List<MockObject> mockObjects = new Gson().fromJson(response, listType);
-                        for (MockObject mock : mockObjects) {
-                            //saving into sqlite
-                            mock.save();
+                        List<MockObject> mockObjects = gson.fromJson(response, listType);
+                        ActiveAndroid.beginTransaction();
+                        try {
+                            for (MockObject mock : mockObjects) {
+                                //saving into sqlite
+                                mock.save();
+                            }
+                            ActiveAndroid.setTransactionSuccessful();
                         }
-                        button.setVisibility(View.VISIBLE);
+                        finally {
+                            ActiveAndroid.endTransaction();
+                            button.setVisibility(View.VISIBLE);
+                        }
                     }
 
                 }, new Response.ErrorListener() {
@@ -75,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         //delete all data
-        MockObject.deleteAll(MockObject.class);
+        new Delete().from(MockObject.class).execute();
         super.onDestroy();
     }
 }

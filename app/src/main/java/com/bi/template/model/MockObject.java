@@ -1,17 +1,22 @@
 package com.bi.template.model;
 
-import com.orm.SugarRecord;
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 
 /**
  * Created by Mohamad on 30-Jul-16.
  */
-public class MockObject extends SugarRecord {
-
-    // using sugar orm sqlite
-    // http://satyan.github.io/sugar/index.html
-    int userId;
-    String title;
-    String body;
+@Table(name = "Mock", id = "_id")
+public class MockObject extends Model {
+    @Column(name ="id")
+    public long id;
+    @Column(name = "userId")
+    public int userId;
+    @Column(name = "title")
+    public String title;
+    @Column(name = "body")
+    public String body;
 
     @Override
     public String toString() {
